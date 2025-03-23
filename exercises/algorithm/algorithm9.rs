@@ -1,11 +1,10 @@
 /*
-	heap
-	This question requires you to implement a binary heap function
+    heap
+    This question requires you to implement a binary heap function
 */
-// I AM NOT DONE
 
 use std::cmp::Ord;
-use std::default::Default;
+use std::{default::Default, marker::Copy};
 
 pub struct Heap<T>
 where
@@ -37,7 +36,20 @@ where
     }
 
     pub fn add(&mut self, value: T) {
+        if self.is_empty() {
+            self.items[0] = value;
+            self.count += 1;
+            return;
+        }
         //TODO
+        let mut idx = self.count;
+        self.count += 1;
+        self.items.push(value);
+        while idx > 0 && (self.comparator)(&self.items[idx], &self.items[self.parent_idx(idx)]) {
+            let parent_idx = self.parent_idx(idx);
+            self.items.swap(idx, parent_idx);
+            idx = parent_idx;
+        }
     }
 
     fn parent_idx(&self, idx: usize) -> usize {
@@ -58,7 +70,7 @@ where
 
     fn smallest_child_idx(&self, idx: usize) -> usize {
         //TODO
-		0
+        0
     }
 }
 
@@ -79,13 +91,41 @@ where
 
 impl<T> Iterator for Heap<T>
 where
-    T: Default,
+    T: Default + Ord,
 {
     type Item = T;
 
     fn next(&mut self) -> Option<T> {
         //TODO
-		None
+        if self.len() == 0 {
+            return None;
+        }
+        self.items.swap(0, self.count - 1);
+        let ret = self.items.pop();
+        let mut idx = self
+            .items
+            .iter()
+            .enumerate()
+            .fold((0, &T::default()), |acc, (i, x)| {
+                if i == 0 {
+                    return (i, x);
+                }
+                if (self.comparator)(x, &self.items[acc.0]) {
+                    (i, x)
+                } else {
+                    acc
+                }
+            })
+            .0;
+
+        while idx > 0 {
+            let parent_idx = self.parent_idx(idx);
+            self.items.swap(idx, parent_idx);
+            idx = parent_idx;
+        }
+
+        self.count -= 1;
+        ret
     }
 }
 
@@ -126,14 +166,22 @@ mod tests {
     fn test_min_heap() {
         let mut heap = MinHeap::new();
         heap.add(4);
+        println!("{:?}", heap.items);
         heap.add(2);
+        println!("{:?}", heap.items);
         heap.add(9);
+        println!("{:?}", heap.items);
         heap.add(11);
+        println!("{:?}", heap.items);
         assert_eq!(heap.len(), 4);
         assert_eq!(heap.next(), Some(2));
+        println!("{:?}", heap.items);
         assert_eq!(heap.next(), Some(4));
+        println!("{:?}", heap.items);
         assert_eq!(heap.next(), Some(9));
+        println!("{:?}", heap.items);
         heap.add(1);
+        println!("{:?}", heap.items);
         assert_eq!(heap.next(), Some(1));
     }
 
@@ -141,14 +189,26 @@ mod tests {
     fn test_max_heap() {
         let mut heap = MaxHeap::new();
         heap.add(4);
+        println!("{:?}", heap.items);
         heap.add(2);
+        println!("{:?}", heap.items);
         heap.add(9);
+        println!("{:?}", heap.items);
         heap.add(11);
+        println!("{:?}", heap.items);
         assert_eq!(heap.len(), 4);
         assert_eq!(heap.next(), Some(11));
+        println!("{:?}", heap.items);
         assert_eq!(heap.next(), Some(9));
+        println!("{:?}", heap.items);
+
         assert_eq!(heap.next(), Some(4));
+        println!("{:?}", heap.items);
+
         heap.add(1);
+        println!("{:?}", heap.items);
+
         assert_eq!(heap.next(), Some(2));
+        println!("{:?}", heap.items);
     }
 }
